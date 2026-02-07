@@ -1392,21 +1392,26 @@ function App() {
               <h2 className="text-xl font-bold text-[var(--text-primary)] truncate" title={chapterTitle || 'Translated Text'}>
                 {chapterTitle || 'Translated Text'}
               </h2>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1 sm:gap-3">
+                {/* Exit button - always visible, first on mobile */}
+                <button onClick={() => setIsTranslatedFullscreen(false)} title="Exit Fullscreen (ESC)" className="p-2 rounded-md bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:brightness-125 transition-colors">
+                  <CollapseIcon />
+                </button>
                 <button
                   onClick={handleGoToPreviousChapter}
                   disabled={!previousChapter}
                   title="Previous Chapter (Left Arrow)"
                   className="p-2 rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Previous Page
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                 </button>
                 <div className='relative'>
                   <button
                     onClick={() => setIsChapterListOpen(o => !o)}
-                    className="p-2 rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                    className="p-2 rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors flex items-center gap-1"
                   >
-                    Chapters
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10a7.968 7.968 0 00-3.5-.804c-1.669 0-3.218.51-4.5 1.385V4.804z" /></svg>
+                    <span className="hidden sm:inline text-sm">Chapters</span>
                   </button>
                   {isChapterListOpen && (
                     <div ref={chapterListRef} className="absolute top-full mt-2 right-0 w-60 bg-[var(--bg-secondary)] rounded-lg p-2 shadow-lg border border-[var(--border-primary)] max-h-96 overflow-y-auto z-30">
@@ -1434,17 +1439,15 @@ function App() {
                   title="Next Chapter (Right Arrow)"
                   className="p-2 rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next Page
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
                 </button>
                 <button
                   onClick={handleQuickBatchTranslate}
                   title="Translate Next Batch"
-                  className="p-2 rounded-md bg-[var(--accent-primary)] text-[var(--text-on-accent)] hover:bg-[var(--accent-secondary)] transition-colors text-sm font-semibold"
+                  className="p-2 rounded-md bg-[var(--accent-primary)] text-[var(--text-on-accent)] hover:bg-[var(--accent-secondary)] transition-colors text-sm font-semibold flex items-center gap-1"
                 >
-                  Batch
-                </button>
-                <button onClick={() => setIsTranslatedFullscreen(false)} title="Exit Fullscreen" className="p-2 rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors">
-                  <CollapseIcon />
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2h-1.528A6 6 0 004 9.528V4z" /><path fillRule="evenodd" d="M8 10a4 4 0 00-3.446 6.032l-1.261 1.26a1 1 0 101.414 1.415l1.261-1.261A4 4 0 108 10zm-2 4a2 2 0 114 0 2 2 0 01-4 0z" clipRule="evenodd" /></svg>
+                  <span className="hidden sm:inline">Batch</span>
                 </button>
               </div>
             </header>

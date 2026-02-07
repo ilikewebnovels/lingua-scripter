@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Project, Chapter, GlossaryEntry, Character } from '../types';
+import { API_URL, authFetch } from '../services/apiClient';
 
 interface BackupRestoreModalProps {
   isOpen: boolean;
@@ -62,18 +63,27 @@ const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
   const [restorePreview, setRestorePreview] = useState<ProjectBackup | FullBackup | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [allChapters, setAllChapters] = useState<Chapter[]>([]);
+  // Local project selection (defaults to currently active project)
+  const [localSelectedProjectId, setLocalSelectedProjectId] = useState<string | null>(selectedProjectId);
+
+  // Sync local selection when modal opens or selectedProjectId changes
+  useEffect(() => {
+    if (isOpen) {
+      setLocalSelectedProjectId(selectedProjectId);
+    }
+  }, [isOpen, selectedProjectId]);
 
   // Fetch all chapters when modal opens (for full backup)
   useEffect(() => {
     if (isOpen) {
-      fetch('http://localhost:3001/api/chapters')
+      authFetch(`${API_URL}/chapters`)
         .then(res => res.json())
         .then(data => setAllChapters(data))
         .catch(err => console.error('Failed to fetch all chapters:', err));
     }
   }, [isOpen]);
 
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const selectedProject = projects.find(p => p.id === localSelectedProjectId);
 
   const handleClose = useCallback(() => {
     setError(null);
@@ -134,18 +144,27 @@ const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
       return;
     }
 
-    // Create and download the file
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    setSuccess(`Backup exported successfully: ${fileName}`);
+    // Create and download the file (no pretty-print to avoid freeze on large data)
+    setIsProcessing(true);
+    // Use setTimeout to avoid UI freeze
+    setTimeout(() => {
+      try {
+        const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setSuccess(`Backup exported successfully: ${fileName}`);
+      } catch (err) {
+        setError('Failed to generate backup: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 50);
   }, [backupType, selectedProject, generateProjectBackup, generateFullBackup]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,8 +217,8 @@ const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
         await onRestoreProject(restorePreview);
         setSuccess(`Project "${restorePreview.project.name}" restored successfully!`);
       } else {
-        // Full backup restore - call API
-        const response = await fetch('/api/restore-full-backup', {
+        // Full backup restore - call API with auth
+        const response = await authFetch(`${API_URL}/restore-full-backup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(restorePreview),
@@ -319,9 +338,21 @@ const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
               </div>
             </div>
 
-            {backupType === 'project' && !selectedProject && (
-              <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 p-3 rounded-md text-sm">
-                Please select a project first to create a project backup.
+            {backupType === 'project' && (
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                  Select Project
+                </label>
+                <select
+                  value={localSelectedProjectId || ''}
+                  onChange={(e) => setLocalSelectedProjectId(e.target.value || null)}
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-md px-3 py-2 text-sm text-[var(--text-primary)] outline-none"
+                >
+                  <option value="">-- Select a project --</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
               </div>
             )}
 
