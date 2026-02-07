@@ -612,12 +612,12 @@ function App() {
     // Update streaming state for live text display
     if (progress.status === 'translating') {
       if (batchStreamingChapterId !== progress.chapterId) {
-        // New chapter started streaming - reset streaming text
+        // New chapter started streaming - set streaming text
         setBatchStreamingChapterId(progress.chapterId);
         setBatchStreamingText(progress.streamingText || '');
       } else if (progress.streamingText !== undefined) {
-        // Same chapter, append new chunk to existing streaming text
-        setBatchStreamingText(prev => prev + progress.streamingText);
+        // Same chapter, set to the accumulated text (callers send accumulated text)
+        setBatchStreamingText(progress.streamingText);
       }
     }
 
@@ -676,6 +676,8 @@ function App() {
     try {
       // Use streaming translation
       let translatedCount = 0;
+      let currentChapterStreamingText = '';
+      let currentStreamingChapterIndex = 0;
       const stream = translateBatchStream(
         chaptersToTranslate,
         activeGlossary,
@@ -694,6 +696,8 @@ function App() {
             setTranslatedText(progress.fullText);
           }
           translatedCount++;
+          // Reset streaming text for next chapter
+          currentChapterStreamingText = '';
           // Notify progress
           handleBatchTranslationProgress({
             chapterId: progress.chapterId,
@@ -709,10 +713,17 @@ function App() {
             // Strip chapter markers from display text
             const cleanText = progress.text.replace(/\[CHAPTER_\d+_(START|END)\]/g, '');
             if (cleanText) {
+              // Reset streaming text if chapter changed
+              if (currentStreamingChapterIndex !== progress.chapterIndex) {
+                currentChapterStreamingText = '';
+                currentStreamingChapterIndex = progress.chapterIndex;
+              }
+              // Accumulate streaming text (like BatchTranslateModal does)
+              currentChapterStreamingText += cleanText;
               handleBatchTranslationProgress({
                 chapterId,
                 status: 'translating',
-                streamingText: cleanText,
+                streamingText: currentChapterStreamingText,
                 completedCount: translatedCount
               });
             }
